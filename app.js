@@ -5,13 +5,14 @@ const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-
 const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
-app.set("view engine", "ejs");
+// Store users location
+const users = {};
 
+app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) => {
@@ -21,22 +22,28 @@ app.get("/", (req, res) => {
 io.on("connection", (socket) => {
   console.log("🟢 User connected:", socket.id);
 
-  socket.on("send-location", (data) => {
-    if (!data?.latitude || !data?.longitude) return;
+  // Send already connected users to new client
+  socket.emit("existing-users", users);
+
+  socket.on("send-location", ({ latitude, longitude }) => {
+    if (!latitude || !longitude) return;
+
+    users[socket.id] = { latitude, longitude };
 
     socket.broadcast.emit("receive-location", {
       id: socket.id,
-      latitude: data.latitude,
-      longitude: data.longitude,
+      latitude,
+      longitude,
     });
   });
 
   socket.on("disconnect", () => {
     console.log("🔴 User disconnected:", socket.id);
+    delete users[socket.id];
     io.emit("client-disconnected", socket.id);
   });
 });
 
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
