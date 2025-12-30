@@ -1,26 +1,22 @@
 const socket = io();
 
-// Initialize map
 const map = L.map("map").setView([0, 0], 2);
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© Neetesh Tracker",
 }).addTo(map);
 
-// Markers
 const markers = {};
 let myMarker = null;
 
 let lastSent = 0;
 let isFirstLocation = true;
 
-// GPS tracking
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(
     (position) => {
       const now = Date.now();
 
-      // Send first location immediately
       if (!isFirstLocation && now - lastSent < 2000) return;
 
       lastSent = now;
@@ -48,7 +44,6 @@ if (navigator.geolocation) {
   );
 }
 
-// Receive existing users
 socket.on("existing-users", (users) => {
   for (const id in users) {
     const { latitude, longitude } = users[id];
@@ -56,7 +51,6 @@ socket.on("existing-users", (users) => {
   }
 });
 
-// Receive live updates
 socket.on("receive-location", ({ id, latitude, longitude }) => {
   if (markers[id]) {
     markers[id].setLatLng([latitude, longitude]);
@@ -65,7 +59,6 @@ socket.on("receive-location", ({ id, latitude, longitude }) => {
   }
 });
 
-// Remove disconnected user
 socket.on("client-disconnected", (id) => {
   if (markers[id]) {
     map.removeLayer(markers[id]);

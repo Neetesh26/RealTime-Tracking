@@ -9,7 +9,6 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
-// Store users location
 const users = {};
 
 app.set("view engine", "ejs");
@@ -22,7 +21,6 @@ app.get("/", (req, res) => {
 io.on("connection", (socket) => {
   console.log("🟢 User connected:", socket.id);
 
-  // Send already connected users to new client
   socket.emit("existing-users", users);
 
   socket.on("send-location", ({ latitude, longitude }) => {
